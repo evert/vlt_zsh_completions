@@ -1,6 +1,7 @@
 # Zsh Completions for vlt
 
-This directory contains the zsh completion script for the [vlt](https://vlt.sh) package manager.
+This directory contains the zsh completion script for the [vlt](https://vlt.sh) package manager.This script was mostly ai-generated. Run at your own risk.
+
 
 ## Installation
 
