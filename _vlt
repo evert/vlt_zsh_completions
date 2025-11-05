@@ -1,0 +1,296 @@
+#compdef vlt
+
+# Zsh completion script for vlt package manager
+# https://vlt.sh
+
+_vlt() {
+  local -a commands
+  local context state state_descr line
+  typeset -A opt_args
+
+  # Main commands
+  commands=(
+    'add:Install packages (alias for install)'
+    'build:Build packages'
+    'cache:Manage the local cache'
+    'ci:Install dependencies in a CI environment'
+    'config:Manage configuration'
+    'docs:Open documentation'
+    'exec:Execute a command with packages from the registry'
+    'exec-cache:Execute a command with cached packages'
+    'exec-local:Execute a locally installed package'
+    'help:Show help information'
+    'init:Initialize a new project'
+    'install:Install packages'
+    'list:List installed packages'
+    'login:Log in to a registry'
+    'logout:Log out from a registry'
+    'pack:Create a tarball from a package'
+    'pkg:Manage package.json'
+    'publish:Publish a package to the registry'
+    'query:Query the dependency graph'
+    'run:Run a package script'
+    'run-exec:Run a script with additional packages'
+    'serve:Start the local registry server'
+    'token:Manage authentication tokens'
+    'uninstall:Remove packages'
+    'update:Update packages'
+    'version:Manage package version'
+    'whoami:Display the current registry user'
+  )
+
+  # Global options
+  local -a global_opts
+  global_opts=(
+    '(-c --color)'{-c,--color}'[Use colors (default for TTY)]'
+    '(-C --no-color)'{-C,--no-color}'[Do not use colors (default for non-TTY)]'
+    '--registry=[Set the registry for fetching packages]:url:'
+    '--registries=[Specify named registry hosts]:name=url:'
+    '--scope-registries=[Map package name scopes to registry URLs]:@scope=url:'
+    '--jsr-registries=[Map alias names to JSR.io registry URLs]:name=url:'
+    '(-G --git-hosts)'{-G,--git-hosts}'=[Map shorthand name to git remote URL template]:name=template:'
+    '(-A --git-host-archives)'{-A,--git-host-archives}'=[Define template for git repository tarball URL]:name=template:'
+    '--cache=[Location of the vlt on-disk cache]:path:_directories'
+    '--tag=[Default dist-tag to install or publish]:tag:'
+    '--before=[Do not install packages published after this date]:date:'
+    '--os=[Operating system selector for packages]:os:'
+    '--arch=[CPU architecture selector for packages]:arch:'
+    '--node-version=[Node version for package selection]:version:'
+    '--git-shallow[Force --depth=1 on git clone actions]'
+    '--no-git-shallow[Do not use --depth=1 on git clone]'
+    '--fetch-retries=[Number of retries for failed fetches]:number:'
+    '--fetch-retry-delay=[Delay between fetch retries]:milliseconds:'
+    '--fetch-retry-max-delay=[Maximum delay between fetch retries]:milliseconds:'
+    '--fetch-retry-min-delay=[Minimum delay between fetch retries]:milliseconds:'
+    '--fetch-timeout=[Timeout for fetch requests]:milliseconds:'
+    '--workspace=[Run command in specific workspace(s)]:workspace:_directories'
+    '--workspace-group=[Run command for workspace group]:group:'
+    '--view=[Output view format]:view:(human json mermaid gui)'
+    '--loglevel=[Logging level]:level:(silly verbose info timing warn error silent)'
+    '--version[Display version information]'
+    '--help[Display help information]'
+  )
+
+  _arguments -C \
+    $global_opts \
+    '1: :->command' \
+    '*:: :->args' \
+    && return 0
+
+  case $state in
+    command)
+      _describe -t commands 'vlt command' commands
+      ;;
+
+    args)
+      local cmd=$words[1]
+
+      case $cmd in
+        install|add|i)
+          _arguments \
+            $global_opts \
+            '--frozen-lockfile[Do not update the lockfile]' \
+            '--expect-lockfile[Expect a lockfile to exist]' \
+            '--lockfile-only[Only update the lockfile, do not install]' \
+            '--allow-scripts=[Pattern for packages allowed to run scripts]:pattern:' \
+            '*:package:'
+          ;;
+
+        uninstall|rm)
+          _arguments \
+            $global_opts \
+            '*:package:'
+          ;;
+
+        update|u)
+          _arguments \
+            $global_opts \
+            '*:package:'
+          ;;
+
+        build|b)
+          _arguments \
+            $global_opts \
+            '*:package:'
+          ;;
+
+        run|r|run-script)
+          _arguments \
+            $global_opts \
+            '1:script:_vlt_scripts' \
+            '*:argument:'
+          ;;
+
+        run-exec|rx)
+          _arguments \
+            $global_opts \
+            '1:script:_vlt_scripts' \
+            '*:package or argument:'
+          ;;
+
+        exec|x)
+          _arguments \
+            $global_opts \
+            '1:command:_command_names' \
+            '*:argument:'
+          ;;
+
+        exec-local|xl)
+          _arguments \
+            $global_opts \
+            '1:command:_command_names' \
+            '*:argument:'
+          ;;
+
+        exec-cache|xc)
+          _arguments \
+            $global_opts \
+            '1:package:' \
+            '*:argument:'
+          ;;
+
+        list|ls)
+          _arguments \
+            $global_opts \
+            '--depth=[Maximum depth to display]:depth:(0 1 2 3 4 5)' \
+            '--all[Show all dependencies]' \
+            '*:package:'
+          ;;
+
+        pack)
+          _arguments \
+            $global_opts \
+            '--destination=[Output directory for tarball]:directory:_directories' \
+            '1:package or directory:_directories'
+          ;;
+
+        publish|pub)
+          _arguments \
+            $global_opts \
+            '--access=[Package access level]:access:(public restricted)' \
+            '--tag=[Publish with specific dist-tag]:tag:' \
+            '--otp=[One-time password for 2FA]:otp:' \
+            '--dry-run[Perform a dry run without publishing]' \
+            '1:package or directory:_directories'
+          ;;
+
+        version)
+          _arguments \
+            $global_opts \
+            '1:version:(major minor patch premajor preminor prepatch prerelease)' \
+            '2:identifier:'
+          ;;
+
+        config)
+          local -a config_commands
+          config_commands=(
+            'get:Get a configuration value'
+            'set:Set a configuration value'
+            'delete:Delete a configuration value'
+            'list:List all configuration values'
+            'edit:Edit the configuration file'
+          )
+          _describe -t commands 'config command' config_commands
+          ;;
+
+        cache)
+          local -a cache_commands
+          cache_commands=(
+            'clean:Clean the cache'
+            'ls:List cache contents'
+            'verify:Verify cache integrity'
+          )
+          _describe -t commands 'cache command' cache_commands
+          ;;
+
+        query|q)
+          _arguments \
+            $global_opts \
+            '--selector=[CSS-like selector for querying]:selector:' \
+            '*:query:'
+          ;;
+
+        pkg|p)
+          local -a pkg_commands
+          pkg_commands=(
+            'get:Get a package.json field'
+            'set:Set a package.json field'
+            'delete:Delete a package.json field'
+          )
+          _describe -t commands 'pkg command' pkg_commands
+          ;;
+
+        init)
+          _arguments \
+            $global_opts \
+            '--yes[Accept all defaults]' \
+            '1:directory:_directories'
+          ;;
+
+        docs)
+          _arguments \
+            $global_opts \
+            '1:topic:'
+          ;;
+
+        serve|s)
+          _arguments \
+            $global_opts \
+            '--port=[Port to listen on]:port:' \
+            '--host=[Host to bind to]:host:'
+          ;;
+
+        login)
+          _arguments \
+            $global_opts \
+            '--registry=[Registry to login to]:url:' \
+            '--scope=[Scope for scoped registry]:scope:'
+          ;;
+
+        logout)
+          _arguments \
+            $global_opts \
+            '--registry=[Registry to logout from]:url:' \
+            '--scope=[Scope for scoped registry]:scope:'
+          ;;
+
+        whoami)
+          _arguments \
+            $global_opts \
+            '--registry=[Registry to check]:url:'
+          ;;
+
+        token)
+          local -a token_commands
+          token_commands=(
+            'list:List authentication tokens'
+            'create:Create a new token'
+            'revoke:Revoke a token'
+          )
+          _describe -t commands 'token command' token_commands
+          ;;
+
+        help|h|'?')
+          _describe -t commands 'vlt command' commands
+          ;;
+
+        *)
+          _arguments $global_opts
+          ;;
+      esac
+      ;;
+  esac
+}
+
+# Helper function to get available scripts from package.json
+_vlt_scripts() {
+  local -a scripts
+  if [[ -f package.json ]]; then
+    scripts=(${(f)"$(node -pe "try { const p = require('./package.json'); Object.keys(p.scripts || {}).join('\n') } catch(e) { '' }" 2>/dev/null)"})
+    if [[ ${#scripts[@]} -gt 0 ]]; then
+      _describe -t scripts 'npm script' scripts
+    fi
+  fi
+}
+
+_vlt "$@"
